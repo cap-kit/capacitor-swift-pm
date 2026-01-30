@@ -55,9 +55,10 @@ jobs:
                     rf'(\.binaryTarget\(\s*name:\s*"{name}".*?checksum:\s*")[^"]+(")',
                     re.S
                 )
-                if not pattern.search(text):
+                match = pattern.search(text)
+                if not match:
                     raise SystemExit(f"Target {name} not found")
-                return pattern.sub(rf'\1{checksum}\2', text)
+                return pattern.sub(lambda m: f'{m.group(1)}{checksum}{m.group(2)}', text)
 
             text = update_target(text, "Capacitor", cap)
             text = update_target(text, "Cordova", cord)
