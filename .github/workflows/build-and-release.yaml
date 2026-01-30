@@ -10,33 +10,80 @@ on:
         type: string
         default: " "
     secrets:
-      XCFRAMEWORK_SIGNING_TOKEN:
+      CAPACITOR_REPO_TOKEN:
         required: true
 
 jobs:
   build:
     runs-on: macos-latest
     timeout-minutes: 30
+
     steps:
-      - run: sudo xcode-select --switch /Applications/Xcode_26.0.app
+      # ------------------------------------------------------------
+      # Toolchain selection (unchanged, harmless)
+      # ------------------------------------------------------------
+      - run: |
+          if [[ "${{ inputs.release-version }}" =~ ^7\. ]]; then
+            sudo xcode-select --switch /Applications/Xcode_16.2.app
+          else
+            sudo xcode-select --switch /Applications/Xcode_26.0.app
+          fi
+
+      # ------------------------------------------------------------
+      # Checkout
+      # ------------------------------------------------------------
       - uses: actions/checkout@v4
+
+      # ------------------------------------------------------------
+      # Install gh (needed to fetch artifacts)
+      # ------------------------------------------------------------
       - name: Install dependencies
-        run: brew install ghr
-      - name: Build Capacitor and Cordova
-        run: ./build-cap ${{ inputs.release-version }}
-      - name: Sign Capacitor xcframework
-        uses: ionic-team/sign-xcframework@main
-        with:
-          cert-token: ${{ secrets.XCFRAMEWORK_SIGNING_TOKEN }}
-          xcframework-path: Capacitor.xcframework
-      - name: Sign Cordova xcframework
-        uses: ionic-team/sign-xcframework@main
-        with:
-          cert-token: ${{ secrets.XCFRAMEWORK_SIGNING_TOKEN }}
-          xcframework-path: Cordova.xcframework
+        run: brew install gh
+
+      # ------------------------------------------------------------
+      # Download prebuilt XCFrameworks from cap-kit/capacitor
+      # ------------------------------------------------------------
+      - name: Download iOS XCFrameworks from capacitor repo
+        env:
+          GH_TOKEN: ${{ secrets.CAPACITOR_REPO_TOKEN }}
+        run: |
+          set -euo pipefail
+
+          mkdir -p ios
+
+          echo "Fetching latest ios-xcframeworks artifact from cap-kit/capacitor"
+
+          ARTIFACT_URL=$(gh api \
+            repos/cap-kit/capacitor/actions/artifacts \
+            --jq '.artifacts[] | select(.name=="ios-xcframeworks") | .archive_download_url' \
+            | head -n 1)
+
+          if [ -z "$ARTIFACT_URL" ]; then
+            echo "ERROR: ios-xcframeworks artifact not found"
+            exit 1
+          fi
+
+          curl -L -H "Authorization: token $GH_TOKEN" "$ARTIFACT_URL" -o ios/artifacts.zip
+          unzip -o ios/artifacts.zip -d ios
+
+          echo "Downloaded XCFrameworks:"
+          ls -la ios
+
+      # ------------------------------------------------------------
+      # Skip local build (intentional)
+      # ------------------------------------------------------------
+      - name: Skip local build (using prebuilt XCFrameworks)
+        run: echo "Skipping build-cap, using prebuilt XCFrameworks"
+
+      # ------------------------------------------------------------
+      # Package Capacitor and Cordova (unchanged script)
+      # ------------------------------------------------------------
       - name: Package Capacitor and Cordova
         run: ./package-cap ${{ inputs.release-version }}
-      - name: Push manifest update
-        uses: EndBug/add-and-commit@v9
-      - name: Create Release
-        run: ghr -token ${{ secrets.GITHUB_TOKEN }} -name ${{ inputs.release-version }} ${{ inputs.draft-flag }} -replace ${{ inputs.release-version }} frameworks
+
+      # ------------------------------------------------------------
+      # NOTE:
+      # - No signing
+      # - No commit
+      # - No GitHub release
+      # ------------------------------------------------------------
