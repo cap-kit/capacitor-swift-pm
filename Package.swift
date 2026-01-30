@@ -24,7 +24,7 @@ let package = Package(
         .binaryTarget(
         name: "Cordova",
         url: "https://github.com/cap-kit/capacitor/releases/download/ios-8.0.2-spm-fix2/Cordova.xcframework.zip",
-        checksum: "ffc6874f3c90e7a74587c137345a6aeccd8215db8b2aa2a0b513e4435d8043c1"
+        checksum: "ffc6874f3c90e7a74587c137345a6aecdc8215db8b2aa2a0b513e4435d8043c1"
         ),
     ]
 )
