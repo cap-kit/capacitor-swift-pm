@@ -17,14 +17,14 @@ let package = Package(
     dependencies: [],
     targets: [
         .binaryTarget(
-            name: "Capacitor",
-            url: "https://github.com/cap-kit/capacitor-swift-pm/releases/download/spm-xcframework-fix-v8.0.2/Capacitor.xcframework.zip",
-            checksum: "a5020aadd75eca4489678d437e2120c474ecac2b92e21de2671327eeb3d98c6a"
+        name: "Capacitor",
+        url: "https://github.com/cap-kit/capacitor/releases/download/spm-xcframework-fix/Capacitor.xcframework.zip",
+        checksum: "b9eab62a1bf2c582adde3e3ddb5452515f7d77ba09525f03ec5f256f99cc9971"
         ),
         .binaryTarget(
-            name: "Cordova",
-            url: "https://github.com/cap-kit/capacitor-swift-pm/releases/download/spm-xcframework-fix-v8.0.2/Cordova.xcframework.zip",
-            checksum: "4dad49f2add4dc7098361d5eadb96ec0ad772187dc0e653ca9f26c87d60d954a"
-        )
+        name: "Cordova",
+        url: "https://github.com/cap-kit/capacitor/releases/download/spm-xcframework-fix/Cordova.xcframework.zip",
+        checksum: "74cd6f9351bec2833db0e24cb60997584a5b7174ce85f5eea467e465f6444c62"
+        ),
     ]
 )
