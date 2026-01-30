@@ -30,20 +30,51 @@ jobs:
           jq -e '.capacitor and .cordova' checksums.json > /dev/null
 
       - name: Update Package.swift
+        env:
+            RELEASE_TAG: ${{ inputs.capacitor_release_tag }}
         run: |
-          CAP=$(jq -r .capacitor checksums.json)
-          CORD=$(jq -r .cordova checksums.json)
-          TAG="${{ inputs.capacitor_release_tag }}"
+            python3 <<'EOF'
+            from pathlib import Path
+            import re
+            import os
+            import json
 
-          sed -i \
-            -e "s|Capacitor.xcframework.zip\".*|Capacitor.xcframework.zip\",|" \
-            -e "s|checksum: \".*\"|checksum: \"$CAP\"|" \
-            Package.swift
+            tag = os.environ["RELEASE_TAG"]
 
-          sed -i \
-            -e "s|Cordova.xcframework.zip\".*|Cordova.xcframework.zip\",|" \
-            -e "s|checksum: \".*\"|checksum: \"$CORD\"|" \
-            Package.swift
+            data = json.loads(Path("checksums.json").read_text())
+            cap = data["capacitor"]
+            cord = data["cordova"]
+
+            if not cap or not cord:
+                raise SystemExit("Invalid checksums.json contents")
+
+            text = Path("Package.swift").read_text()
+
+            def update_target(text, name, checksum):
+                pattern = re.compile(
+                    rf'(\.binaryTarget\(\s*name:\s*"{name}".*?checksum:\s*")[^"]+(")',
+                    re.S
+                )
+                if not pattern.search(text):
+                    raise SystemExit(f"Target {name} not found")
+                return pattern.sub(rf'\1{checksum}\2', text)
+
+            text = update_target(text, "Capacitor", cap)
+            text = update_target(text, "Cordova", cord)
+
+            text = re.sub(
+                r'https://github.com/.*/Capacitor.xcframework.zip',
+                f'https://github.com/cap-kit/capacitor/releases/download/{tag}/Capacitor.xcframework.zip',
+                text
+            )
+            text = re.sub(
+                r'https://github.com/.*/Cordova.xcframework.zip',
+                f'https://github.com/cap-kit/capacitor/releases/download/{tag}/Cordova.xcframework.zip',
+                text
+            )
+
+            Path("Package.swift").write_text(text)
+            EOF
 
       - name: Commit changes
         run: |
