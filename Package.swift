@@ -18,13 +18,13 @@ let package = Package(
     targets: [
         .binaryTarget(
         name: "Capacitor",
-        url: "https://github.com/cap-kit/capacitor/releases/download/ios-8.0.2-spm-fix2/Capacitor.xcframework.zip",
-        checksum: "5ece93a4bbf85013e347fa8207771210d01a9655ad3994b4506cf9049200d398"
+        url: "https://github.com/cap-kit/capacitor/releases/download/ios-8.0.2-fix3/Capacitor.xcframework.zip",
+        checksum: "787221d6efec85f82238fe8ba55855bd38eb5f32b507175279913ae338747fd6"
         ),
         .binaryTarget(
         name: "Cordova",
-        url: "https://github.com/cap-kit/capacitor/releases/download/ios-8.0.2-spm-fix2/Cordova.xcframework.zip",
-        checksum: "ffc6874f3c90e7a74587c137345a6aecdc8215db8b2aa2a0b513e4435d8043c1"
+        url: "https://github.com/cap-kit/capacitor/releases/download/ios-8.0.2-fix3/Cordova.xcframework.zip",
+        checksum: "8ee26611276beaedf50b9627b8cb08b9661de5bd851e56bde28dc8aa8344c260"
         ),
     ]
 )
