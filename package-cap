@@ -1,11 +1,47 @@
-#!/usr/bin/env bash -eoux pipefail
+#!/usr/bin/env bash -euo pipefail
 
-mkdir frameworks
-zip -r frameworks/Capacitor.xcframework.zip Capacitor.xcframework
-zip -r frameworks/Cordova.xcframework.zip Cordova.xcframework
+# ------------------------------------------------------------
+# Assumptions:
+# - XCFrameworks are already present in ./ios
+#   - ios/Capacitor.xcframework
+#   - ios/Cordova.xcframework
+# - This script ONLY packages and generates Package.swift
+# ------------------------------------------------------------
 
-write_package_file() {
-	cat <<EOF >Package.swift
+VERSION="$1"
+
+if [ -z "$VERSION" ]; then
+  echo "ERROR: release version argument is required"
+  exit 1
+fi
+
+rm -rf frameworks
+mkdir -p frameworks
+
+echo "Zipping XCFrameworks..."
+
+zip -r frameworks/Capacitor.xcframework.zip ios/Capacitor.xcframework
+zip -r frameworks/Cordova.xcframework.zip ios/Cordova.xcframework
+
+# ------------------------------------------------------------
+# Compute checksums
+# ------------------------------------------------------------
+
+cap_sha=$(shasum -a 256 frameworks/Capacitor.xcframework.zip | awk '{print $1}')
+cord_sha=$(shasum -a 256 frameworks/Cordova.xcframework.zip | awk '{print $1}')
+
+# ------------------------------------------------------------
+# URLs (pointing to cap-kit fork releases)
+# ------------------------------------------------------------
+
+cap_url="https://github.com/cap-kit/capacitor-swift-pm/releases/download/${VERSION}/Capacitor.xcframework.zip"
+cord_url="https://github.com/cap-kit/capacitor-swift-pm/releases/download/${VERSION}/Cordova.xcframework.zip"
+
+# ------------------------------------------------------------
+# Write Package.swift
+# ------------------------------------------------------------
+
+cat <<EOF > Package.swift
 // swift-tools-version:5.3
 
 import PackageDescription
@@ -26,22 +62,18 @@ let package = Package(
     targets: [
         .binaryTarget(
             name: "Capacitor",
-            url: "$1",
-            checksum: "$2"
+            url: "$cap_url",
+            checksum: "$cap_sha"
         ),
         .binaryTarget(
             name: "Cordova",
-            url: "$3",
-            checksum: "$4"
+            url: "$cord_url",
+            checksum: "$cord_sha"
         )
     ]
 )
 EOF
-}
 
-cap_url="https://github.com/ionic-team/capacitor-swift-pm/releases/download/$1/Capacitor.xcframework.zip"
-cap_sha=$(shasum -a 256 frameworks/Capacitor.xcframework.zip | sed 's/ /\n/g' | head -n1 | xargs echo -n)
-cap_cordova_url="https://github.com/ionic-team/capacitor-swift-pm/releases/download/$1/Cordova.xcframework.zip"
-cap_cordova_sha=$(shasum -a 256 frameworks/Cordova.xcframework.zip | sed 's/ /\n/g' | head -n1 | xargs echo -n)
-
-write_package_file $cap_url $cap_sha $cap_cordova_url $cap_cordova_sha
+echo "Package.swift generated successfully"
+echo "Capacitor checksum: $cap_sha"
+echo "Cordova checksum:   $cord_sha"
