@@ -1,0 +1,58 @@
+name: Update SwiftPM binaries from Capacitor release
+
+on:
+  workflow_dispatch:
+    inputs:
+      capacitor_release_tag:
+        description: 'Tag from cap-kit/capacitor (e.g. ios-8.0.2-spm-fix2)'
+        required: true
+        type: string
+      spm_version:
+        description: 'New SemVer tag for capacitor-swift-pm (e.g. 8.0.2-spmfix3)'
+        required: true
+        type: string
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Download checksums.json
+        run: |
+          curl -L \
+            https://github.com/cap-kit/capacitor/releases/download/${{ inputs.capacitor_release_tag }}/checksums.json \
+            -o checksums.json
+
+      - name: Validate checksums
+        run: |
+          jq -e '.capacitor and .cordova' checksums.json > /dev/null
+
+      - name: Update Package.swift
+        run: |
+          CAP=$(jq -r .capacitor checksums.json)
+          CORD=$(jq -r .cordova checksums.json)
+          TAG="${{ inputs.capacitor_release_tag }}"
+
+          sed -i \
+            -e "s|Capacitor.xcframework.zip\".*|Capacitor.xcframework.zip\",|" \
+            -e "s|checksum: \".*\"|checksum: \"$CAP\"|" \
+            Package.swift
+
+          sed -i \
+            -e "s|Cordova.xcframework.zip\".*|Cordova.xcframework.zip\",|" \
+            -e "s|checksum: \".*\"|checksum: \"$CORD\"|" \
+            Package.swift
+
+      - name: Commit changes
+        run: |
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
+          git commit -am "fix(spm): update binaries to ${{ inputs.capacitor_release_tag }}"
+
+      - name: Tag and push
+        run: |
+          git tag ${{ inputs.spm_version }}
+          git push origin HEAD
+          git push origin ${{ inputs.spm_version }}
