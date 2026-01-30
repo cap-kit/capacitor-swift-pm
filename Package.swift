@@ -19,12 +19,12 @@ let package = Package(
         .binaryTarget(
             name: "Capacitor",
             url: "https://github.com/cap-kit/capacitor-swift-pm/releases/download/spm-xcframework-fix-v8.0.2/Capacitor.xcframework.zip",
-            checksum: "41f60a8a3762129d21bdd68ef2586f1036744c0c64a92fd57a93030a85881753"
+            checksum: "a5020aadd75eca4489678d437e2120c474ecac2b92e21de2671327eeb3d98c6a"
         ),
         .binaryTarget(
             name: "Cordova",
             url: "https://github.com/cap-kit/capacitor-swift-pm/releases/download/spm-xcframework-fix-v8.0.2/Cordova.xcframework.zip",
-            checksum: "8d0b03f76ca5b045fd8206f1603cdfd2c241eaee03298e76a504d857dec98c8c"
+            checksum: "4dad49f2add4dc7098361d5eadb96ec0ad772187dc0e653ca9f26c87d60d954a"
         )
     ]
 )
